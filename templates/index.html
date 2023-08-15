@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar navbar-fixed-top navbar-header">
+            <div class = "text-center">
+                <h1>CodeWars Kata Generator</h1>
+            </div>
+        </nav>
+    </div> 
+
+    <div class="container mt-5">
+        <div class="row d-flex">
+
+            <div class="col">
+                <select class="groupSelect w-100 p-2" aria-label="Default select example">
+                    <option selected value="">Select Group</option>
+                </select>
+            </div>
+            
+            <div class="col">
+                <select class="difficultySelect w-100 p-2" aria-label="Default select example">
+                    <option selected value="">Select Difficulty</option>
+                </select>
+            </div>
+            
+            <div class="col">                
+                <button id="getKata" class="btn btn-primary" type="button">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    Get Challenge
+                </button>
+            </div>
+        </div>
+
+        <hr>
+        <h2 id="kataHolder" class="text-center">Code Kata Link Will Appear Here</h2>
+    </div> 
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+
+            let kyu_id;
+
+            let kyudiffLevels = {
+                'Kyu 1 - Hardest': '1',
+                'Kyu 2': '2',
+                'Kyu 3': '3',
+                'Kyu 4': '4',
+                'Kyu 5': '5',
+                'Kyu 6': '6',
+                'Kyu 7': '7',
+                'Kyu 8 - Easiest': '8',
+            };
+
+            let classGroups = {
+                'group-a': 'Group A',
+                'group-b': 'Group B',
+                'group-c': 'Group C',
+                'group-d': 'Group D',
+                'group-e': 'Group E',
+                'group-f': 'Group F',
+                'group-g': 'Group G',
+                'group-h': 'Group H',
+                'group-i': 'Group I',
+                'group-j': 'Group J',
+                'group-k': 'Group K',
+                'group-l': 'Group L',
+                'group-m': 'Group M',
+                'group-n': 'Group N',
+                'group-o': 'Group O',
+                'group-p': 'Group P',
+                'group-q': 'Group Q',
+                'group-r': 'Group R',
+                'group-s': 'Group S',
+                'group-t': 'Group T',
+                'group-u': 'Group U',
+                'group-v': 'Group V',
+                'group-w': 'Group W',
+                'group-x': 'Group X',
+                'group-y': 'Group Y',
+                'group-z': 'Group Z',
+                'group-a1': 'Group A1',
+                'group-b1': 'Group B1',
+                'group-c1': 'Group C1'
+            }
+
+            for (i in classGroups) {
+                $('.groupSelect').append(`<option value="${i}">${classGroups[i]}</option>`)
+            }
+
+            for (i in kyudiffLevels) {
+                $('.difficultySelect').append(`<option value="${kyudiffLevels[i]}">${i}</option>`)
+            }
+
+            $("#getKata").on("click", function () {
+
+                let groupSelect = $('.groupSelect').val()
+                let difficultySelect = $('.difficultySelect').val()
+
+                if (groupSelect=='' || difficultySelect==''){
+                    console.log('Kindly Select an Option')
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Oops...',
+                        text: 'Kindly Select an Option'
+                    })
+                }
+                else{
+                    // Disable the button and show the spinner
+                    $(this).prop("disabled", true);
+                    $(this).find(".spinner-border").removeClass("d-none");
+
+                    // Make an AJAX request to your Flask API endpoint to get challenge
+                    $.ajax({
+                        type: "POST",
+                        url: "/api/get_challenges",
+                        data: { kyu_level: difficultySelect },
+                        dataType: "json",
+                        success: function(response) {
+                            // Display the fetched challenge IDs
+                            let codeWarsUrl = `https://www.codewars.com/kata/${response.challenge_id}`;
+
+                            $('#kataHolder').html(` 
+                                        <p>${classGroups[groupSelect]}</p> 
+                                        <p>Code Kata: <a target='blank' href='${codeWarsUrl}'>${codeWarsUrl}</a></p>
+                                    `)
+
+                            // Update Database - Make a fetch request to add the kata
+                            $.ajax({
+                                type: "POST",
+                                url: "/api/add_kata",
+                                data: {
+                                    kyu: difficultySelect,
+                                    group_name: groupSelect,
+                                    code_kata_url: response.challenge_id
+                                },
+                                success: function(resdt) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Done!',
+                                        text: resdt
+                                    })
+                                },
+                                error: function(error) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Oops...',
+                                        text: 'Error adding kata'
+                                    })
+                                },
+                                complete: function() {
+                                    // Re-enable the button and hide the spinner
+                                    $("#getKata").prop("disabled", false);
+                                    $("#getKata .spinner-border").addClass("d-none");
+                                }
+                            });
+
+                        },
+                        error: function(error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Error fetching challenges'
+                            })
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+   
+     
