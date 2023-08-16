@@ -1,8 +1,13 @@
 from flask import Flask, render_template, request, jsonify
-import requests, random, datetime, psycopg2, sqlite3
+from flask_cors import CORS
+import requests, sqlite3
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for the entire app
+
+CORS(app, origins=['*'])
 
 # Create a connection to the database
 def create_connection():
@@ -39,6 +44,20 @@ def is_challenge_id_allocated_in_database(challenge_id):
 
     return existing_challenge_id is not None
 
+def is_group_kata_allocated_in_database(group_name, date):
+    conn = create_connection()
+    cur = conn.cursor()
+
+    query = "SELECT code_kata_url FROM katas WHERE group_name = ? AND date = ?;"
+    cur.execute(query, (group_name, date))
+    existing_code_kata_url = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return existing_code_kata_url
+
+## Routes
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -46,6 +65,17 @@ def index():
 @app.route('/api/get_challenges', methods=['POST'])
 def get_challenges():
     if request.method == 'POST':
+        group_name = request.form['group_name']
+        current_datetime = datetime.now()
+
+        date = current_datetime.strftime('%Y-%m-%d')
+
+        # Check if a code kata for the specified group name and date exists
+        existing_code_kata_url = is_group_kata_allocated_in_database(group_name, date)
+        
+        if existing_code_kata_url:
+            return jsonify({"challenge_id": existing_code_kata_url[0], "found":"true"})
+
         kyu_level = request.form['kyu_level']
         challenge_ids = get_challenge_info_by_kyu(kyu_level) # this is a list
 
@@ -61,7 +91,9 @@ def add_kata():
     conn = create_connection() 
 
     if request.method == 'POST':
-        date = datetime.datetime.now().date()
+        current_datetime = datetime.now()
+
+        date = current_datetime.strftime('%Y-%m-%d')
         group_name = request.form['group_name']
         code_kata_url = request.form['code_kata_url']
         kyu = request.form['kyu']
@@ -73,6 +105,34 @@ def add_kata():
         conn.close()
 
         return jsonify("Kata added to database.")
+
+@app.route('/api/get_all_katas', methods=['GET'])
+def get_all_katas():
+    date_param = request.args.get('date')
+    conn = create_connection()
+    cur = conn.cursor()
+
+    if date_param:
+        query = "SELECT * FROM katas WHERE date = ? ORDER BY id ASC;"
+        cur.execute(query, (date_param,))
+    else:
+        query = "SELECT * FROM katas ORDER BY id DESC;"
+        cur.execute(query)
+
+    katas = []
+    for row in cur.fetchall():
+        kata = {
+            'date': row[1],
+            'group_name': row[2],
+            'code_kata_url': row[3],
+            'kyu': row[4]
+        }
+        katas.append(kata)
+
+    cur.close()
+    conn.close()
+
+    return jsonify({'katas': katas})
 
 if __name__ == '__main__':
     app.run()
