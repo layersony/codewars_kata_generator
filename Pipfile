@@ -10,6 +10,8 @@ flask = "*"
 psycopg2 = "*"
 flask-cors = "*"
 gunicorn = "*"
+python-decouple = "*"
+python-dotenv = "*"
 
 [dev-packages]
 

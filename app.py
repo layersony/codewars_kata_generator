@@ -3,15 +3,30 @@ from flask_cors import CORS
 import requests, sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
+from decouple import config
+import psycopg2
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the entire app
 
 CORS(app, origins=['*'])
 
+# Read database connection variables from .env
+DB_NAME = config('DB_NAME')
+DB_USER = config('DB_USER')
+DB_PASSWORD = config('DB_PASSWORD')
+DB_HOST = config('DB_HOST')
+DB_PORT = config('DB_PORT')
+
 # Create a connection to the database
 def create_connection():
-    conn = sqlite3.connect('codekata.db')
+    conn = psycopg2.connect(
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        host=DB_HOST,
+        port=DB_PORT
+    )
     return conn
 
 def get_challenge_info_by_kyu(kyu_level):
@@ -35,7 +50,7 @@ def is_challenge_id_allocated_in_database(challenge_id):
     conn = create_connection()
     cur = conn.cursor()
 
-    query = "SELECT code_kata_url FROM katas WHERE code_kata_url = ?;"
+    query = "SELECT code_kata_url FROM katas WHERE code_kata_url = %s;"
     cur.execute(query, (challenge_id,))
     existing_challenge_id = cur.fetchone()
 
@@ -48,7 +63,7 @@ def is_group_kata_allocated_in_database(group_name, date):
     conn = create_connection()
     cur = conn.cursor()
 
-    query = "SELECT code_kata_url FROM katas WHERE group_name = ? AND date = ?;"
+    query = "SELECT code_kata_url FROM katas WHERE group_name = %s AND date = %s;"
     cur.execute(query, (group_name, date))
     existing_code_kata_url = cur.fetchone()
 
@@ -98,9 +113,11 @@ def add_kata():
         code_kata_url = request.form['code_kata_url']
         kyu = request.form['kyu']
 
-        query = "INSERT INTO katas (date, group_name, code_kata_url, kyu) VALUES (?, ?, ?, ?);"
-        conn.execute(query, (date, group_name, code_kata_url, kyu))
+        query = "INSERT INTO katas (date, group_name, code_kata_url, kyu) VALUES (%s, %s, %s, %s);"
+        cur = conn.cursor()
+        cur.execute(query, (date, group_name, code_kata_url, kyu))
         conn.commit()
+        cur.close()
 
         conn.close()
 
@@ -113,7 +130,7 @@ def get_all_katas():
     cur = conn.cursor()
 
     if date_param:
-        query = "SELECT * FROM katas WHERE date = ? ORDER BY id ASC;"
+        query = "SELECT * FROM katas WHERE date = %s ORDER BY id ASC;"
         cur.execute(query, (date_param,))
     else:
         query = "SELECT * FROM katas ORDER BY id DESC;"
