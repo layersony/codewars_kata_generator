@@ -17,3 +17,6 @@ RUN pipenv install --deploy --ignore-pipfile
 
 # Copy the application code into the container
 COPY . /app/
+
+# Command to run the Flask app
+CMD ["pipenv", "run", "python", "app.py"]

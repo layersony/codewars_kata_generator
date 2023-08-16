@@ -1,23 +1,8 @@
 version: '3'
-
 services:
   web:
     build: .
-    command: pipenv run python app.py
+    ports:
+      - 5000:5000
     volumes:
       - .:/app
-    ports:
-      - "5000:5000"
-    depends_on:
-      - db
-    environment:
-      DATABASE_URL: postgres://theElite:theElite@db/codekatas
-
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: codekatas
-      POSTGRES_USER: theElite
-      POSTGRES_PASSWORD: theElite
-    ports:
-      - "5433:5433"

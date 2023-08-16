@@ -1,18 +1,12 @@
 from flask import Flask, render_template, request, jsonify
-import requests, random, datetime, psycopg2
+import requests, random, datetime, psycopg2, sqlite3
 from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
 # Create a connection to the database
 def create_connection():
-    conn = psycopg2.connect(
-        database="codekatas",
-        user="theElite",
-        password="theElite",
-        host="localhost",
-        port="5433"
-    )
+    conn = sqlite3.connect('codekata.db')
     return conn
 
 def get_challenge_info_by_kyu(kyu_level):
@@ -36,7 +30,7 @@ def is_challenge_id_allocated_in_database(challenge_id):
     conn = create_connection()
     cur = conn.cursor()
 
-    query = "SELECT code_kata_url FROM katas WHERE code_kata_url = %s;"
+    query = "SELECT code_kata_url FROM katas WHERE code_kata_url = ?;"
     cur.execute(query, (challenge_id,))
     existing_challenge_id = cur.fetchone()
 
@@ -64,8 +58,7 @@ def get_challenges():
     
 @app.route('/api/add_kata', methods=['POST'])
 def add_kata():
-    conn = create_connection()
-    cur = conn.cursor()
+    conn = create_connection() 
 
     if request.method == 'POST':
         date = datetime.datetime.now().date()
@@ -73,11 +66,10 @@ def add_kata():
         code_kata_url = request.form['code_kata_url']
         kyu = request.form['kyu']
 
-        query = "INSERT INTO katas (date, group_name, code_kata_url, kyu) VALUES (%s, %s, %s, %s);"
-        cur.execute(query, (date, group_name, code_kata_url, kyu))
+        query = "INSERT INTO katas (date, group_name, code_kata_url, kyu) VALUES (?, ?, ?, ?);"
+        conn.execute(query, (date, group_name, code_kata_url, kyu))
         conn.commit()
 
-        cur.close()
         conn.close()
 
         return jsonify("Kata added to database.")
