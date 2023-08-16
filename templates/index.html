@@ -214,7 +214,13 @@
                 },
                 responsive: true, // Enable responsive feature
                 columns: [
-                    { data: 'date' },
+                    { 
+                        data: 'date',
+                        render: function(data, type, row) {
+                            const date = new Date(data);
+                            return date.toDateString()
+                        }
+                    },
                     { 
                         data: 'group_name',
                         render: function(data, type, row) {
