@@ -30,21 +30,22 @@ def create_connection():
     return conn
 
 def get_challenge_info_by_kyu(kyu_level):
-    url = f'https://www.codewars.com/kata/search/?q=&r%5B%5D=-{kyu_level}&order_by=sort_date%20desc'
+    for pageno in range(30):
+        url = f'https://www.codewars.com/kata/search/?q=&r%5B%5D=-{kyu_level}&beta=false&order_by=sort_date+desc&page={pageno}'
 
-    response = requests.get(url)
-    codewarIds = []
+        response = requests.get(url)
+        codewarIds = []
 
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        div_elements = soup.find_all('div', class_='list-item-kata')
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            div_elements = soup.find_all('div', class_='list-item-kata')
 
-        for div_element in div_elements:
-            challenge_id = div_element.get('id')
-            codewarIds.append(challenge_id)
-                
-    return codewarIds
+            for div_element in div_elements:
+                challenge_id = div_element.get('id')
+                codewarIds.append(challenge_id)
+                    
+        return codewarIds
 
 def is_challenge_id_allocated_in_database(challenge_id):
     conn = create_connection()
