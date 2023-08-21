@@ -30,7 +30,7 @@ def create_connection():
     return conn
 
 def get_challenge_info_by_kyu(kyu_level):
-    for pageno in range(30):
+    for pageno in range(1, 30):
         url = f'https://www.codewars.com/kata/search/?q=&r%5B%5D=-{kyu_level}&beta=false&order_by=sort_date+desc&page={pageno}'
 
         response = requests.get(url)
