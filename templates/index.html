@@ -24,6 +24,12 @@
                     <option selected value="">Select Group</option>
                 </select>
             </div>
+
+            <div class="col">
+                <select class="languageSelect w-100 p-2" aria-label="Default select example">
+                    <option selected value="">Select Language</option>
+                </select>
+            </div>
             
             <div class="col">
                 <select class="difficultySelect w-100 p-2" aria-label="Default select example">
@@ -77,36 +83,18 @@
                 'Kyu 7 - Easier': '7',
             };
 
+            let languageType = {
+                'python': 'Python',
+                'javascript': 'Javascript',
+                'ruby': 'Ruby',
+            };
+
             let classGroups = {
                 'group-a': 'Group A',
                 'group-b': 'Group B',
                 'group-c': 'Group C',
                 'group-d': 'Group D',
-                'group-e': 'Group E',
-                'group-f': 'Group F',
-                'group-g': 'Group G',
-                'group-h': 'Group H',
-                'group-i': 'Group I',
-                'group-j': 'Group J',
-                'group-k': 'Group K',
-                'group-l': 'Group L',
-                'group-m': 'Group M',
-                'group-n': 'Group N',
-                'group-o': 'Group O',
-                'group-p': 'Group P',
-                'group-q': 'Group Q',
-                'group-r': 'Group R',
-                'group-s': 'Group S',
-                'group-t': 'Group T',
-                'group-u': 'Group U',
-                'group-v': 'Group V',
-                'group-w': 'Group W',
-                'group-x': 'Group X',
-                'group-y': 'Group Y',
-                'group-z': 'Group Z',
-                'group-a1': 'Group A1',
-                'group-b1': 'Group B1',
-                'group-c1': 'Group C1'
+                'group-e': 'Group E'
             }
 
             for (i in classGroups) {
@@ -117,12 +105,17 @@
                 $('.difficultySelect').append(`<option value="${kyudiffLevels[i]}">${i}</option>`)
             }
 
+            for (i in languageType) {
+                $('.languageSelect').append(`<option value="${i}">${languageType[i]}</option>`)
+            }
+
             $("#getKata").on("click", function () {
 
                 let groupSelect = $('.groupSelect').val()
                 let difficultySelect = $('.difficultySelect').val()
+                let language = $('.languageSelect').val()
 
-                if (groupSelect=='' || difficultySelect==''){
+                if (groupSelect=='' || difficultySelect=='' || language==''){
                     console.log('Kindly Select an Option')
                     Swal.fire({
                         icon: 'warning',
@@ -141,7 +134,8 @@
                         url: "/api/get_challenges",
                         data: { 
                             kyu_level: difficultySelect,
-                            group_name: groupSelect
+                            group_name: groupSelect,
+                            language: language
                         },
                         dataType: "json",
                         success: function(response) {
@@ -200,6 +194,10 @@
                                 title: 'Oops...',
                                 text: 'Error fetching challenges'
                             })
+
+                            // Re-enable the button and hide the spinner
+                            $("#getKata").prop("disabled", false);
+                            $("#getKata .spinner-border").addClass("d-none");
                         }
                     });
                 }
