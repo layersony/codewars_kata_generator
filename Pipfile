@@ -12,6 +12,7 @@ flask-cors = "*"
 gunicorn = "*"
 python-decouple = "*"
 python-dotenv = "*"
+ipdb = "*"
 
 [dev-packages]
 
