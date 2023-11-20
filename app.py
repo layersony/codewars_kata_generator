@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from decouple import config
 import psycopg2
+import ipdb
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the entire app
@@ -29,10 +30,9 @@ def create_connection():
     )
     return conn
 
-def get_challenge_info_by_kyu(kyu_level):
-    for pageno in range(1, 30):
-        url = f'https://www.codewars.com/kata/search/?q=&r%5B%5D=-{kyu_level}&beta=false&order_by=sort_date+desc&page={pageno}'
-
+def get_challenge_info_by_kyu(kyu_level, language):
+    for pageno in range(1, 100):
+        url = f'https://www.codewars.com/kata/search/{language}?q=&r%5B%5D=-{kyu_level}&order_by=sort_date+desc&page={pageno}'
         response = requests.get(url)
         codewarIds = []
 
@@ -93,7 +93,8 @@ def get_challenges():
             return jsonify({"challenge_id": existing_code_kata_url[0], "found":"true"})
 
         kyu_level = request.form['kyu_level']
-        challenge_ids = get_challenge_info_by_kyu(kyu_level) # this is a list
+        language = request.form['language']
+        challenge_ids = get_challenge_info_by_kyu(kyu_level, language) # this is a list
 
         for challenge_id in challenge_ids:
             # Check if the challenge ID is not in the database
